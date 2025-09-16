@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Enabled Voice DeepFake Detection Model</title>
+    <style>
+        body {
+            background-color: #eafaf9;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #008080;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: slideDown 1s ease;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            margin: 30px auto;
+            width: 90%;
+            max-width: 600px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            color: #008080;
+            text-align: center;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px; /* Add padding for alignment */
+            border: 2px solid #008080; /* Updated border color */
+            border-radius: 5px;
+            outline: none;
+            font-size: 16px;
+            box-sizing: border-box; /* Ensures padding doesn't exceed container */
+            background-color: #f9f9f9;
+            color: #333;
+            cursor: pointer;
+        }
+
+        input[type="file"]::-webkit-file-upload-button {
+            padding: 8px 15px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #008080; /* Updated button color */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        input[type="file"]::-webkit-file-upload-button:hover {
+            background-color: #007bff; /* Updated hover color */
+            transform: scale(1.05);
+        }
+
+        input[type="submit"] {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #008080;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #FF7F50;
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="submit"]:active {
+            transform: scale(1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .audio-player {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        audio {
+            width: 100%;
+        }
+
+        .loader {
+            display: none;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .loader img {
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .result {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .fake-result {
+            color: red;
+        }
+
+        .real-result {
+            color: green;
+        }
+
+        footer {
+            background-color: #008080;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            margin-top: auto;
+            animation: fadeIn 1s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Voice DeepFake Detection</h1>
+    </header>
+
+    <div class="container">
+        <h2>Upload an audio file:</h2>
+        <form id="upload_form" action="/model.html" method="POST" enctype="multipart/form-data">
+            <input type="file" name="audio_file" id="audio_file" required>
+            <label for="model_select">Choose a model:</label>
+            <select name="model_option" id="model_select">
+                <option value="a">Wav2Vec</option>
+                <option value="b">AutoEncoder</option>
+                <option value="c">Combined</option>
+            </select>
+            <div id="loader" class="loader">
+                <img src="/static/loader.gif" alt="Loading...">
+            </div>
+            <input type="submit" id="submit_btn" value="Submit">
+        </form>
+
+        <div class="audio-player">
+            <audio controls id="audio_player">
+                <source id="audio_source" src="#" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+
+        {% if result_label %}
+        <div class="result">
+            {% set result_parts = result_label.split(':') %}
+            <p>
+                <span>{{ result_parts[0] }}:</span>
+                {% if "Fake" in result_parts[1] %}
+                    <span class="fake-result">{{ result_parts[1] }}</span>
+                {% else %}
+                    <span class="real-result">{{ result_parts[1] }}</span>
+                {% endif %}
+                {% if result_parts[2] %}
+                    :<span class="fake-result">{{ result_parts[2] }}</span>
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer>
+    </footer>
+
+    <script>
+        const audioFileInput = document.getElementById('audio_file');
+        const audioPlayer = document.getElementById('audio_player');
+        const audioSource = document.getElementById('audio_source');
+        const uploadForm = document.getElementById('upload_form');
+        const submitBtn = document.getElementById('submit_btn');
+        const loader = document.getElementById('loader');
+
+        audioFileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const fileURL = URL.createObjectURL(file);
+            audioSource.src = fileURL;
+            audioPlayer.load();
+        });
+
+        uploadForm.addEventListener('submit', function() {
+            loader.style.display = 'block';
+            submitBtn.disabled = true;
+        });
+    </script>
+</body>
+</html>
